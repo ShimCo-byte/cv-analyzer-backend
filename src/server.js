@@ -130,7 +130,7 @@ scrapeJobsFromLinkedIn().then(() => {
 // Server Start
 // ======================
 
-app.listen(PORT, () => {
+const server = app.listen(PORT, '0.0.0.0', () => {
   console.log('=================================');
   console.log('CV Analyzer Backend Server');
   console.log('=================================');
@@ -138,21 +138,6 @@ app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
   console.log(`API available at: http://localhost:${PORT}/api`);
   console.log('=================================');
-  console.log('\nAvailable endpoints:');
-  console.log(`  GET  http://localhost:${PORT}/api/health`);
-  console.log(`  POST http://localhost:${PORT}/api/upload-resume`);
-  console.log(`  POST http://localhost:${PORT}/api/analyze-job-fit`);
-  console.log(`  GET  http://localhost:${PORT}/api/study-programs`);
-  console.log(`  GET  http://localhost:${PORT}/api/job-offers`);
-  console.log(`  GET  http://localhost:${PORT}/api/job-offers/stats`);
-  console.log(`  POST http://localhost:${PORT}/api/job-offers/scrape`);
-  console.log(`  POST http://localhost:${PORT}/api/job-offers/matched`);
-  console.log(`  POST http://localhost:${PORT}/api/auth/signup`);
-  console.log(`  POST http://localhost:${PORT}/api/auth/signin`);
-  console.log(`  POST http://localhost:${PORT}/api/auth/signout`);
-  console.log(`  GET  http://localhost:${PORT}/api/auth/me`);
-  console.log(`  PUT  http://localhost:${PORT}/api/auth/profile`);
-  console.log('=================================\n');
 });
 
 // Graceful shutdown
