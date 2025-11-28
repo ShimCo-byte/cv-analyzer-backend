@@ -9,10 +9,11 @@ import dotenv from 'dotenv';
 // Load .env before accessing process.env
 dotenv.config();
 
-// Supabase configuration (trim to remove any accidental whitespace/newlines)
+// Supabase configuration (remove ALL whitespace including newlines in middle of keys)
+const cleanKey = (key) => key ? key.replace(/\s+/g, '') : key;
 const supabaseUrl = (process.env.SUPABASE_URL || 'https://placeholder.supabase.co').trim();
-const supabaseKey = (process.env.SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.placeholder').trim();
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY?.trim();
+const supabaseKey = cleanKey(process.env.SUPABASE_ANON_KEY) || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.placeholder';
+const supabaseServiceKey = cleanKey(process.env.SUPABASE_SERVICE_ROLE_KEY);
 
 // Check if Supabase is configured
 const isSupabaseConfigured =
