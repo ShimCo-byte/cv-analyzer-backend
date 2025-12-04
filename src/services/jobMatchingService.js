@@ -812,26 +812,110 @@ export function generatePersonalizedResumeForJob(userProfile, job, language = 'e
  * Extract key requirements from job description
  */
 function extractKeyRequirements(description) {
-  const requirements = [];
+  const requirements = {
+    technologies: [],
+    softSkills: [],
+    yearsRequired: null,
+    educationRequired: null,
+    responsibilities: [],
+    benefits: []
+  };
 
-  // Common requirement patterns
-  const patterns = [
-    /(\d+)\+?\s*years?\s*(of\s*)?(experience|exp)/gi,
-    /(bachelor|master|phd|degree)/gi,
-    /(fluent|proficient)\s+in\s+(\w+)/gi,
-    /(required|must have|essential):\s*([^.]+)/gi
-  ];
+  const descLower = description.toLowerCase();
 
-  // Common tech keywords
+  // Extract years of experience requirement
+  const yearsMatch = descLower.match(/(\d+)\+?\s*(?:years?|rokov?|let)\s*(?:of\s*)?(?:experience|skúseností|zkušeností|exp)/i);
+  if (yearsMatch) {
+    requirements.yearsRequired = parseInt(yearsMatch[1]);
+  }
+
+  // Extract education requirement
+  if (descLower.includes('bachelor') || descLower.includes('bakalár')) {
+    requirements.educationRequired = 'bachelor';
+  } else if (descLower.includes('master') || descLower.includes('magister') || descLower.includes('inžinier')) {
+    requirements.educationRequired = 'master';
+  } else if (descLower.includes('phd') || descLower.includes('doktor')) {
+    requirements.educationRequired = 'phd';
+  }
+
+  // Extended tech keywords - more comprehensive
   const techKeywords = [
-    'react', 'angular', 'vue', 'node', 'python', 'java', 'javascript', 'typescript',
-    'aws', 'azure', 'gcp', 'docker', 'kubernetes', 'sql', 'nosql', 'mongodb',
-    'agile', 'scrum', 'ci/cd', 'git', 'rest', 'graphql', 'api'
+    // Frontend
+    'react', 'react.js', 'reactjs', 'angular', 'vue', 'vue.js', 'vuejs', 'svelte', 'next.js', 'nextjs', 'nuxt',
+    'javascript', 'typescript', 'html', 'css', 'sass', 'scss', 'less', 'tailwind', 'bootstrap', 'material-ui',
+    'redux', 'mobx', 'zustand', 'webpack', 'vite', 'babel', 'eslint', 'prettier',
+    // Backend
+    'node', 'node.js', 'nodejs', 'express', 'nestjs', 'fastify', 'python', 'django', 'flask', 'fastapi',
+    'java', 'spring', 'spring boot', 'kotlin', 'scala', 'ruby', 'rails', 'php', 'laravel', 'symfony',
+    'golang', 'go', 'rust', 'c#', '.net', 'asp.net',
+    // Database
+    'sql', 'mysql', 'postgresql', 'postgres', 'mongodb', 'nosql', 'redis', 'elasticsearch', 'dynamodb',
+    'oracle', 'sqlite', 'mariadb', 'cassandra', 'neo4j', 'graphql', 'prisma', 'typeorm', 'sequelize',
+    // DevOps & Cloud
+    'aws', 'amazon web services', 'azure', 'gcp', 'google cloud', 'docker', 'kubernetes', 'k8s',
+    'terraform', 'ansible', 'jenkins', 'gitlab', 'github actions', 'ci/cd', 'devops',
+    'linux', 'nginx', 'apache', 'serverless', 'lambda', 'microservices',
+    // Mobile
+    'react native', 'flutter', 'swift', 'kotlin', 'ios', 'android', 'mobile',
+    // Testing
+    'jest', 'mocha', 'cypress', 'selenium', 'playwright', 'testing', 'tdd', 'bdd', 'unit testing',
+    // Other
+    'agile', 'scrum', 'kanban', 'git', 'github', 'gitlab', 'bitbucket', 'jira', 'confluence',
+    'rest', 'restful', 'api', 'websocket', 'grpc', 'soap',
+    'machine learning', 'ml', 'ai', 'data science', 'deep learning', 'tensorflow', 'pytorch',
+    'figma', 'sketch', 'adobe xd', 'ui/ux', 'design system'
   ];
 
+  // Soft skills keywords
+  const softSkillKeywords = [
+    { keywords: ['team', 'collaborate', 'collaboration', 'teamwork', 'tím', 'spolupráca'], skill: 'Teamwork' },
+    { keywords: ['communicate', 'communication', 'komunikácia', 'prezentácia'], skill: 'Communication' },
+    { keywords: ['problem solving', 'riešenie problémov', 'analytical', 'analytické'], skill: 'Problem Solving' },
+    { keywords: ['leadership', 'lead', 'mentor', 'vedenie', 'líder'], skill: 'Leadership' },
+    { keywords: ['deadline', 'time management', 'termín', 'časový manažment'], skill: 'Time Management' },
+    { keywords: ['creative', 'innovation', 'kreativita', 'inovácia'], skill: 'Creativity' },
+    { keywords: ['adaptable', 'flexible', 'adaptability', 'flexibilita'], skill: 'Adaptability' },
+    { keywords: ['detail', 'attention to detail', 'dôkladnosť', 'presnosť'], skill: 'Attention to Detail' },
+    { keywords: ['self-motivated', 'independent', 'samostatný', 'iniciatíva'], skill: 'Self-Motivation' },
+    { keywords: ['customer', 'client', 'zákazník', 'klient'], skill: 'Customer Focus' }
+  ];
+
+  // Extract technologies
   techKeywords.forEach(keyword => {
-    if (description.includes(keyword)) {
-      requirements.push(keyword);
+    if (descLower.includes(keyword.toLowerCase())) {
+      // Capitalize properly
+      const formatted = keyword.split(' ').map(w => {
+        if (w === 'js' || w === 'css' || w === 'html' || w === 'sql' || w === 'api' || w === 'ci/cd') return w.toUpperCase();
+        if (w === 'aws' || w === 'gcp' || w === 'k8s' || w === 'ml' || w === 'ai' || w === 'tdd' || w === 'bdd') return w.toUpperCase();
+        return w.charAt(0).toUpperCase() + w.slice(1);
+      }).join(' ');
+
+      if (!requirements.technologies.includes(formatted)) {
+        requirements.technologies.push(formatted);
+      }
+    }
+  });
+
+  // Extract soft skills
+  softSkillKeywords.forEach(({ keywords, skill }) => {
+    if (keywords.some(kw => descLower.includes(kw))) {
+      if (!requirements.softSkills.includes(skill)) {
+        requirements.softSkills.push(skill);
+      }
+    }
+  });
+
+  // Extract key responsibilities (look for common patterns)
+  const responsibilityPatterns = [
+    /(?:you will|you'll|responsibilities include|your role|key responsibilities|čo budeš robiť|náplň práce)[:\s]*([^.]+)/gi,
+    /(?:develop|build|create|design|implement|maintain|manage|lead|collaborate)[^.]+/gi
+  ];
+
+  // Extract benefits mentioned
+  const benefitKeywords = ['remote', 'flexible', 'home office', 'bonus', 'equity', 'stock', 'vacation', 'benefits', 'vzdialene', 'flexibilný'];
+  benefitKeywords.forEach(keyword => {
+    if (descLower.includes(keyword)) {
+      requirements.benefits.push(keyword);
     }
   });
 
@@ -845,42 +929,81 @@ function generatePersonalizedSummary(userProfile, job, matchingSkills, isSk) {
   const years = userProfile.yearsOfExperience || 0;
   const level = userProfile.experienceLevel || 'mid';
   const jobTitle = job.title || 'this position';
+  const company = job.company || '';
+  const jobDescription = (job.description || '').toLowerCase();
+
+  // Extract job type/focus
+  const jobType = job.type || '';
+  const isRemote = (job.location || '').toLowerCase().includes('remote');
 
   const levelMap = {
-    'junior': isSk ? 'motivovaný' : 'motivated',
-    'mid': isSk ? 'skúsený' : 'experienced',
-    'senior': isSk ? 'senior' : 'senior',
-    'lead': isSk ? 'vedúci' : 'lead'
+    'junior': isSk ? 'motivovaný a rýchlo sa učiaci' : 'motivated and quick-learning',
+    'mid': isSk ? 'skúsený' : 'results-driven',
+    'senior': isSk ? 'senior' : 'seasoned',
+    'lead': isSk ? 'skúsený vedúci' : 'accomplished lead'
   };
 
   let summary = '';
 
   if (isSk) {
-    summary += `${levelMap[level]?.charAt(0).toUpperCase() + levelMap[level]?.slice(1)} profesionál s ${years} rokmi skúseností, `;
-    summary += `ideálne pripravený na pozíciu ${jobTitle}. `;
+    // Opening statement with job title mention
+    summary += `${levelMap[level]?.charAt(0).toUpperCase() + levelMap[level]?.slice(1)} ${jobType || 'softvérový'} profesionál `;
+    summary += `s ${years}+ rokmi hands-on skúseností, `;
+    summary += `nadšený z príležitosti prispieť k tímu ${company ? `v ${company}` : ''} ako ${jobTitle}. `;
 
+    // Skill alignment
     if (matchingSkills.length > 0) {
-      summary += `Moje kľúčové zručnosti vrátane ${matchingSkills.slice(0, 3).join(', ')} `;
-      summary += `priamo zodpovedajú požiadavkám tejto pozície. `;
+      summary += `\n\nMoje expertízy v ${matchingSkills.slice(0, 4).join(', ')} `;
+      summary += `sa presne zhodujú s technickými požiadavkami tejto pozície. `;
     }
 
-    if (userProfile.currentPosition) {
-      summary += `Aktuálne pracujem ako ${userProfile.currentPosition}, `;
-      summary += `kde som získal relevantné skúsenosti pre túto rolu.`;
+    // Specific achievements/experience
+    if (userProfile.workExperience && userProfile.workExperience.length > 0) {
+      const recentExp = userProfile.workExperience[0];
+      if (recentExp.company) {
+        summary += `Moje nedávne skúsenosti v ${recentExp.company} mi poskytli silný základ `;
+        summary += `pre okamžitý prínos v tejto role. `;
+      }
     }
+
+    // Remote work mention if applicable
+    if (isRemote && userProfile.remotePreference === 'remote') {
+      summary += `Mám overené skúsenosti s efektívnou prácou na diaľku. `;
+    }
+
+    // Value proposition
+    summary += `\n\nSom pripravený priniesť svoj technický talent, proaktívny prístup a `;
+    summary += `schopnosť dodávať kvalitné riešenia do vášho tímu.`;
+
   } else {
-    summary += `${levelMap[level]?.charAt(0).toUpperCase() + levelMap[level]?.slice(1)} professional with ${years} years of experience, `;
-    summary += `well-suited for the ${jobTitle} position. `;
+    // Opening statement with job title mention
+    summary += `${levelMap[level]?.charAt(0).toUpperCase() + levelMap[level]?.slice(1)} ${jobType || 'software'} professional `;
+    summary += `with ${years}+ years of hands-on experience, `;
+    summary += `eager to contribute to ${company ? `the team at ${company}` : 'your team'} as ${jobTitle}. `;
 
+    // Skill alignment - be specific about matching
     if (matchingSkills.length > 0) {
-      summary += `My core competencies including ${matchingSkills.slice(0, 3).join(', ')} `;
-      summary += `directly align with this role's requirements. `;
+      summary += `\n\nMy expertise in ${matchingSkills.slice(0, 4).join(', ')} `;
+      summary += `directly aligns with the technical requirements of this role. `;
     }
 
-    if (userProfile.currentPosition) {
-      summary += `Currently working as ${userProfile.currentPosition}, `;
-      summary += `where I have gained relevant experience for this position.`;
+    // Specific achievements/experience
+    if (userProfile.workExperience && userProfile.workExperience.length > 0) {
+      const recentExp = userProfile.workExperience[0];
+      if (recentExp.company) {
+        summary += `My recent experience at ${recentExp.company} has provided me with a strong foundation `;
+        summary += `to make an immediate impact in this position. `;
+      }
     }
+
+    // Remote work mention if applicable
+    if (isRemote && userProfile.remotePreference === 'remote') {
+      summary += `I have a proven track record of working effectively in remote environments. `;
+    }
+
+    // Value proposition
+    summary += `\n\nI am ready to bring my technical expertise, proactive approach, and `;
+    summary += `commitment to delivering high-quality solutions to your team.`;
   }
 
   return summary;
@@ -891,53 +1014,112 @@ function generatePersonalizedSummary(userProfile, job, matchingSkills, isSk) {
  */
 function generateKeyQualifications(userProfile, job, matchingSkills, keyRequirements, isSk) {
   let qualifications = '';
+  const jobDescription = (job.description || '').toLowerCase();
+  const jobTitle = (job.title || '').toLowerCase();
 
-  // Years of experience
-  if (userProfile.yearsOfExperience) {
-    qualifications += isSk
-      ? `• ${userProfile.yearsOfExperience} rokov skusenosti v odbore\n`
-      : `• ${userProfile.yearsOfExperience} years of industry experience\n`;
+  // Check if job requires specific years
+  const requiredYears = keyRequirements.yearsRequired;
+  const userYears = userProfile.yearsOfExperience || 0;
+
+  // Years of experience - highlight if meeting/exceeding requirement
+  if (userYears) {
+    if (requiredYears && userYears >= requiredYears) {
+      qualifications += isSk
+        ? `• ${userYears} rokov skúseností (spĺňa požiadavku ${requiredYears}+ rokov)\n`
+        : `• ${userYears} years of experience (exceeds ${requiredYears}+ years requirement)\n`;
+    } else {
+      qualifications += isSk
+        ? `• ${userYears} rokov praktických skúseností v softvérovom vývoji\n`
+        : `• ${userYears} years of hands-on software development experience\n`;
+    }
   }
 
-  // Matching skills
+  // Matching skills - categorized by relevance
   if (matchingSkills.length > 0) {
-    qualifications += isSk
-      ? `• Ovladam technologie pozadovane pre tuto poziciu: ${matchingSkills.slice(0, 5).join(', ')}\n`
-      : `• Proficient in technologies required for this role: ${matchingSkills.slice(0, 5).join(', ')}\n`;
+    // Identify which matching skills appear most prominently in job description
+    const prioritySkills = matchingSkills.filter(skill => {
+      const skillLower = skill.toLowerCase();
+      return jobTitle.includes(skillLower) ||
+             jobDescription.split(skillLower).length > 2; // appears multiple times
+    });
+
+    const otherMatchingSkills = matchingSkills.filter(s => !prioritySkills.includes(s));
+
+    if (prioritySkills.length > 0) {
+      qualifications += isSk
+        ? `• Silné odborné znalosti v ${prioritySkills.slice(0, 3).join(', ')} - hlavné technológie pre túto pozíciu\n`
+        : `• Strong expertise in ${prioritySkills.slice(0, 3).join(', ')} - core technologies for this role\n`;
+    }
+
+    if (otherMatchingSkills.length > 0) {
+      qualifications += isSk
+        ? `• Ďalšie relevantné zručnosti: ${otherMatchingSkills.slice(0, 4).join(', ')}\n`
+        : `• Additional relevant skills: ${otherMatchingSkills.slice(0, 4).join(', ')}\n`;
+    }
   }
 
-  // Education if relevant
+  // Education - check if matches job requirements
   if (userProfile.university && userProfile.university.degree) {
+    const userDegree = (userProfile.university.degree || '').toLowerCase();
+    const meetsDegree = !keyRequirements.educationRequired ||
+                        (keyRequirements.educationRequired === 'bachelor' && (userDegree.includes('bachelor') || userDegree.includes('master') || userDegree.includes('phd'))) ||
+                        (keyRequirements.educationRequired === 'master' && (userDegree.includes('master') || userDegree.includes('phd')));
+
     qualifications += isSk
-      ? `• Vzdelanie: ${userProfile.university.degree} v odbore ${userProfile.university.field}\n`
-      : `• Education: ${userProfile.university.degree} in ${userProfile.university.field}\n`;
+      ? `• ${userProfile.university.degree} v odbore ${userProfile.university.field}${meetsDegree ? ' (spĺňa požiadavky)' : ''}\n`
+      : `• ${userProfile.university.degree} in ${userProfile.university.field}${meetsDegree ? ' (meets requirements)' : ''}\n`;
   }
 
   // Remote work experience if job is remote
   const isRemoteJob = (job.location || '').toLowerCase().includes('remote');
-  if (isRemoteJob && userProfile.remotePreference === 'remote') {
-    qualifications += isSk
-      ? `• Skusenosti s pracou na dialku a self-managementom\n`
-      : `• Experienced in remote work and self-management\n`;
-  }
-
-  // Current position relevance
-  if (userProfile.currentPosition) {
-    const currentPosLower = userProfile.currentPosition.toLowerCase();
-    const jobTitleLower = (job.title || '').toLowerCase();
-
-    if (currentPosLower.includes('developer') || currentPosLower.includes('engineer')) {
+  if (isRemoteJob) {
+    if (userProfile.remotePreference === 'remote' || userProfile.remotePreference === 'hybrid') {
       qualifications += isSk
-        ? `• Aktualne pracujem ako ${userProfile.currentPosition}\n`
-        : `• Currently employed as ${userProfile.currentPosition}\n`;
+        ? `• Overené skúsenosti s remote/hybridnou prácou a samostatným riadením času\n`
+        : `• Proven experience in remote/hybrid work environments with strong self-management\n`;
     }
   }
 
-  // Certifications count
+  // Job type specific qualifications
+  if (jobTitle.includes('senior') || jobTitle.includes('lead')) {
+    if (userProfile.workExperience && userProfile.workExperience.length >= 2) {
+      qualifications += isSk
+        ? `• Skúsenosti z ${userProfile.workExperience.length} rôznych pozícií poskytujú široký rozhľad\n`
+        : `• Experience across ${userProfile.workExperience.length} different roles provides broad perspective\n`;
+    }
+  }
+
+  // Soft skills that match job requirements
+  if (keyRequirements.softSkills && keyRequirements.softSkills.length > 0) {
+    const userSoftSkills = userProfile.softSkills || [];
+    const matchingSoftSkills = keyRequirements.softSkills.filter(skill =>
+      userSoftSkills.some(us => us.toLowerCase().includes(skill.toLowerCase()))
+    );
+
+    if (matchingSoftSkills.length > 0) {
+      qualifications += isSk
+        ? `• Silné mäkké zručnosti: ${matchingSoftSkills.slice(0, 3).join(', ')}\n`
+        : `• Strong soft skills: ${matchingSoftSkills.slice(0, 3).join(', ')}\n`;
+    }
+  }
+
+  // Certifications - prioritize relevant ones
   if (userProfile.certifications && userProfile.certifications.length > 0) {
-    qualifications += isSk
-      ? `• ${userProfile.certifications.length} profesionalnych certifikatov\n`
-      : `• ${userProfile.certifications.length} professional certifications\n`;
+    const relevantCerts = userProfile.certifications.filter(cert => {
+      const certLower = cert.toLowerCase();
+      return matchingSkills.some(skill => certLower.includes(skill.toLowerCase())) ||
+             keyRequirements.technologies?.some(tech => certLower.includes(tech.toLowerCase()));
+    });
+
+    if (relevantCerts.length > 0) {
+      qualifications += isSk
+        ? `• Relevantné certifikáty: ${relevantCerts.slice(0, 2).join(', ')}\n`
+        : `• Relevant certifications: ${relevantCerts.slice(0, 2).join(', ')}\n`;
+    } else {
+      qualifications += isSk
+        ? `• ${userProfile.certifications.length} profesionálnych certifikátov\n`
+        : `• ${userProfile.certifications.length} professional certifications\n`;
+    }
   }
 
   return qualifications;
@@ -977,7 +1159,7 @@ function calculateExperienceRelevance(experience, job, matchingSkills) {
 }
 
 /**
- * Enhance experience description by highlighting job-relevant skills
+ * Enhance experience description by highlighting job-relevant skills and adding impact statements
  */
 function enhanceExperienceDescription(description, matchingSkills, isSk) {
   let enhanced = description;
@@ -988,7 +1170,61 @@ function enhanceExperienceDescription(description, matchingSkills, isSk) {
     enhanced = enhanced.replace(regex, '**$1**');
   });
 
+  // Add relevance indicator for descriptions with multiple matching skills
+  const matchCount = matchingSkills.filter(skill =>
+    description.toLowerCase().includes(skill.toLowerCase())
+  ).length;
+
+  if (matchCount >= 3) {
+    enhanced = `[Highly relevant to this role] ${enhanced}`;
+  } else if (matchCount >= 2) {
+    enhanced = `[Relevant experience] ${enhanced}`;
+  }
+
   return enhanced;
+}
+
+/**
+ * Generate job-specific bullet points for work experience
+ */
+function generateJobSpecificBullets(experience, job, matchingSkills, isSk) {
+  const bullets = [];
+  const jobDescription = (job.description || '').toLowerCase();
+  const expDescription = (experience.description || '').toLowerCase();
+
+  // Check for specific achievements that align with job requirements
+  const achievementPatterns = [
+    { pattern: /(\d+)%?\s*(improv|increas|reduc|optimi)/i, type: 'quantified' },
+    { pattern: /led\s+(?:a\s+)?team|managed\s+\d+/i, type: 'leadership' },
+    { pattern: /implement|develop|built|created|designed/i, type: 'building' },
+    { pattern: /migrat|upgrad|modern/i, type: 'modernization' }
+  ];
+
+  // If job mentions specific focuses, highlight matching experience
+  if (jobDescription.includes('scalab') && expDescription.includes('scal')) {
+    bullets.push(isSk
+      ? 'Skúsenosti so škálovaním aplikácií relevantné pre požiadavky tejto pozície'
+      : 'Experience scaling applications directly relevant to this role\'s requirements');
+  }
+
+  if (jobDescription.includes('agile') && (expDescription.includes('agile') || expDescription.includes('scrum') || expDescription.includes('sprint'))) {
+    bullets.push(isSk
+      ? 'Praktické skúsenosti s agilnými metodológiami požadovanými pre túto pozíciu'
+      : 'Hands-on agile methodology experience required for this position');
+  }
+
+  // Check for technology matches
+  const techMatches = matchingSkills.filter(skill =>
+    expDescription.includes(skill.toLowerCase())
+  );
+
+  if (techMatches.length > 0) {
+    bullets.push(isSk
+      ? `Priame skúsenosti s ${techMatches.slice(0, 3).join(', ')} z tejto pozície`
+      : `Direct experience with ${techMatches.slice(0, 3).join(', ')} from this role`);
+  }
+
+  return bullets;
 }
 
 /**
@@ -1009,40 +1245,85 @@ function generateWhyGoodFit(userProfile, job, matchingSkills, isSk) {
   let text = '';
   const jobTitle = job.title || 'this position';
   const company = job.company || 'your company';
+  const jobDescription = (job.description || '').toLowerCase();
+  const isRemote = (job.location || '').toLowerCase().includes('remote');
+  const jobType = job.type || '';
+
+  // Analyze job for specific focuses
+  const focusAreas = [];
+  if (jobDescription.includes('scalab') || jobDescription.includes('performan')) focusAreas.push('performance');
+  if (jobDescription.includes('user experience') || jobDescription.includes('ux') || jobDescription.includes('ui')) focusAreas.push('ux');
+  if (jobDescription.includes('agile') || jobDescription.includes('scrum')) focusAreas.push('agile');
+  if (jobDescription.includes('startup') || jobDescription.includes('fast-paced')) focusAreas.push('startup');
+  if (jobDescription.includes('mentor') || jobDescription.includes('lead') || jobDescription.includes('team')) focusAreas.push('leadership');
 
   if (isSk) {
-    text += `Som presvedčený, že som ideálny kandidát na pozíciu ${jobTitle} v spoločnosti ${company}, pretože:\n\n`;
+    text += `Som presvedčený, že som silný kandidát na pozíciu ${jobTitle} v spoločnosti ${company}:\n\n`;
 
+    // Technical alignment
     if (matchingSkills.length > 0) {
-      text += `• Mám priame skúsenosti s technológiami, ktoré táto pozícia vyžaduje (${matchingSkills.slice(0, 4).join(', ')})\n`;
+      const topSkills = matchingSkills.slice(0, 4).join(', ');
+      text += `• Technická zhoda: Moje ${matchingSkills.length}+ rokov práce s ${topSkills} ma pripravili na okamžitý prínos v tejto role\n`;
     }
 
-    if (userProfile.yearsOfExperience >= 2) {
-      text += `• Mám ${userProfile.yearsOfExperience} rokov overených skúseností v odbore\n`;
+    // Experience depth
+    if (userProfile.yearsOfExperience >= 2 && userProfile.workExperience && userProfile.workExperience.length > 0) {
+      const recentJob = userProfile.workExperience[0];
+      text += `• Overené výsledky: ${userProfile.yearsOfExperience} rokov skúseností vrátane pozície ${recentJob.position || 'developer'} v ${recentJob.company || 'poprednej spoločnosti'}\n`;
     }
 
-    if (userProfile.workExperience && userProfile.workExperience.length > 0) {
-      text += `• Mám praktické skúsenosti z ${userProfile.workExperience.length} predchádzajúcich pozícií\n`;
+    // Specific job focus alignments
+    if (focusAreas.includes('performance')) {
+      text += `• Zameranie na výkon: Skúsenosti s optimalizáciou a škálovateľnými riešeniami\n`;
+    }
+    if (focusAreas.includes('agile')) {
+      text += `• Agilné metodológie: Praktické skúsenosti s agilným vývojom a iteratívnym dodávaním\n`;
+    }
+    if (focusAreas.includes('leadership') && (userProfile.experienceLevel === 'senior' || userProfile.experienceLevel === 'lead')) {
+      text += `• Vedenie: Skúsenosti s mentorovaním juniorov a vedením technických iniciatív\n`;
     }
 
-    text += `• Som motivovaný prispieť k úspechu tímu a priniesť hodnotu od prvého dňa\n`;
+    // Remote work
+    if (isRemote && userProfile.remotePreference === 'remote') {
+      text += `• Remote práca: Overené skúsenosti s efektívnou prácou na diaľku a autonómnym riadením projektov\n`;
+    }
+
+    // Cultural fit
+    text += `• Kultúrna zhoda: Som proaktívny, komunikatívny a zameraný na dodávanie hodnoty pre tím a zákazníkov\n`;
 
   } else {
-    text += `I am confident that I am an excellent fit for the ${jobTitle} position at ${company} because:\n\n`;
+    text += `I am confident that I am a strong candidate for the ${jobTitle} position at ${company}:\n\n`;
 
+    // Technical alignment
     if (matchingSkills.length > 0) {
-      text += `• I have direct experience with the technologies this role requires (${matchingSkills.slice(0, 4).join(', ')})\n`;
+      const topSkills = matchingSkills.slice(0, 4).join(', ');
+      text += `• Technical Alignment: My ${matchingSkills.length}+ years working with ${topSkills} have prepared me to make an immediate impact in this role\n`;
     }
 
-    if (userProfile.yearsOfExperience >= 2) {
-      text += `• I bring ${userProfile.yearsOfExperience} years of proven industry experience\n`;
+    // Experience depth
+    if (userProfile.yearsOfExperience >= 2 && userProfile.workExperience && userProfile.workExperience.length > 0) {
+      const recentJob = userProfile.workExperience[0];
+      text += `• Proven Track Record: ${userProfile.yearsOfExperience} years of experience including ${recentJob.position || 'developer'} role at ${recentJob.company || 'a leading company'}\n`;
     }
 
-    if (userProfile.workExperience && userProfile.workExperience.length > 0) {
-      text += `• I have practical experience from ${userProfile.workExperience.length} previous positions\n`;
+    // Specific job focus alignments
+    if (focusAreas.includes('performance')) {
+      text += `• Performance Focus: Experience with optimization and building scalable solutions\n`;
+    }
+    if (focusAreas.includes('agile')) {
+      text += `• Agile Methodology: Hands-on experience with agile development and iterative delivery\n`;
+    }
+    if (focusAreas.includes('leadership') && (userProfile.experienceLevel === 'senior' || userProfile.experienceLevel === 'lead')) {
+      text += `• Leadership: Experience mentoring junior developers and leading technical initiatives\n`;
     }
 
-    text += `• I am motivated to contribute to the team's success and deliver value from day one\n`;
+    // Remote work
+    if (isRemote && userProfile.remotePreference === 'remote') {
+      text += `• Remote Work: Proven ability to work effectively in distributed teams with autonomous project management\n`;
+    }
+
+    // Cultural fit
+    text += `• Cultural Fit: I am proactive, communicative, and focused on delivering value to the team and customers\n`;
   }
 
   return text;
